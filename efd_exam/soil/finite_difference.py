@@ -10,7 +10,7 @@ T_(i+1) = alpha * (t_(i+1) - t_i) * approximate(d^2T/dz^2) + T_i
 
 where approximate(d^2T/dz^2) is:
 
-(approx(dT_(i,j+1/2)/dz) - approx(dT_(i, j-1/2)/dz)) / ((z_j+1 - z_j-1)/2)
+(approx(dT_(i,j+1/2)/dz) - approx(dT_(i, j-1/2)/dz)) / ((z_j+1 + z_j-1)/2)
 
 and
 
@@ -32,7 +32,7 @@ def second_spatial_deriv(matrix, depths, i, j):
     z_1 = depths[j - 1]
     z_2 = depths[j + 1]
 
-    central_difference = (dT2 - dT1) / ((z_2 - z_1) / 2)
+    central_difference = (dT2 - dT1) / ((z_2 + z_1) / 2)
     return central_difference
 
 
@@ -41,5 +41,5 @@ def first_spatial_deriv(matrix, depths, i, lower_j):
     T_2 = matrix[i][lower_j + 1]
     z_1 = depths[lower_j]
     z_2 = depths[lower_j + 1]
-    forward_difference = (T_2 - T_1) / (z_2 - z_1)
-    return forward_difference
+    difference = (T_2 - T_1) / (z_2 - z_1)
+    return difference

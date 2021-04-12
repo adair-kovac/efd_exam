@@ -3,7 +3,6 @@ import pandas as pd
 def load_data():
     data = pd.read_csv("soil_data.dat", sep="\t", parse_dates={"date": ["%YEAR", "Month", "Day", "Hour (UTC)", "Min"]},
                        keep_date_col=True)
-
     for i, row in data.iterrows():
         data.at[i, "seconds_since"] = get_time(int(row["Day"]), int(row["Hour (UTC)"]), int(row["Min"]))
     return data

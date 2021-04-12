@@ -18,7 +18,7 @@ import numpy as np
 from soil import soil_data_loader as data_loader
 from soil import finite_difference
 from soil import soil_temp_plot
-alpha = .4 / 100 # Converting to cm
+alpha = .4e-6
 observation_depths_str = ["1.6", "3.9", "5.8", "8.5", "10.4", "15", "25"]
 
 
@@ -31,16 +31,18 @@ def main():
                                                                alpha, matrix[i-1][j])
     observation_depths_str_model = observation_depths_str + ["30"]
     time_column = original_data["seconds_since"]
-    soil_temp_plot.plot(time_column, matrix, observation_depths_str_model, "model_plot")
+    soil_temp_plot.plot(time_column, matrix, observation_depths_str_model, "Finite Difference Numerical Solution")
     columns = ["T-" + depth for depth in observation_depths_str]
-    soil_temp_plot.plot(time_column, original_data[columns], observation_depths_str, "data_plot")
+    soil_temp_plot.plot(time_column, original_data[columns], observation_depths_str, "Actual Data")
     model_data_dim = matrix[:, :-1]
-    soil_temp_plot.plot(time_column, original_data[columns] - model_data_dim, observation_depths_str,  "residual")
-    soil_temp_plot.contour_plot(observation_depths[:-1], time_column, original_data[columns], "contour")
+    soil_temp_plot.plot(time_column, original_data[columns] - model_data_dim, observation_depths_str,
+                        "Actual Minus Modelled")
+    soil_temp_plot.contour_plot(observation_depths[:-1], time_column, original_data[columns],
+                                "Actual Temperature by Depth and Time")
 
 
 def initialize_data():
-    observation_depths = [float(x) for x in observation_depths_str]
+    observation_depths = [float(x)/100 for x in observation_depths_str] # convert cm to m
     surface_boundary_temperatures_by_time = []
     data = data_loader.load_data()
     observation_times = data["seconds_since"]
@@ -51,12 +53,13 @@ def initialize_data():
 
     num_rows = len(observation_times)
     num_columns = len(initial_temperatures_by_depth) + 1
-    observation_depths.append(30) # Adding a final row for the temperature at depth BC
+    observation_depths.append(.3) # Adding a final row for the temperature at depth BC
 
     matrix = np.zeros((num_rows, num_columns))
     matrix[:, 0] = surface_boundary_temperatures_by_time
     initial_temperatures_by_depth.append(deep_temperature)
     matrix[0] = initial_temperatures_by_depth
+    matrix[:, -1] = deep_temperature
     return matrix, observation_depths, observation_times, data
 
 
