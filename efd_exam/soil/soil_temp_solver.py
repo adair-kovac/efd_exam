@@ -21,23 +21,30 @@ from soil import soil_temp_plot
 alpha = .4 / 100 # Converting to cm
 observation_depths_str = ["1.6", "3.9", "5.8", "8.5", "10.4", "15", "25"]
 
+
 def main():
-    matrix, observation_depths, observation_times = initialize_data()
+    matrix, observation_depths, observation_times, original_data = initialize_data()
     for j in range(1, len(observation_depths_str)):
         for i in range(1, len(observation_times)):
             matrix[i][j] = finite_difference.temp_at_next_time(matrix, observation_times,
                                                                observation_depths, i-1, j,
                                                                alpha, matrix[i-1][j])
-    soil_temp_plot.plot(matrix, observation_depths_str)
+    observation_depths_str_model = observation_depths_str + ["30"]
+    time_column = original_data["seconds_since"]
+    soil_temp_plot.plot(time_column, matrix, observation_depths_str_model, "model_plot")
+    columns = ["T-" + depth for depth in observation_depths_str]
+    soil_temp_plot.plot(time_column, original_data[columns], observation_depths_str, "data_plot")
+    model_data_dim = matrix[:, :-1]
+    soil_temp_plot.plot(time_column, original_data[columns] - model_data_dim, observation_depths_str,  "residual")
+    soil_temp_plot.contour_plot(observation_depths[:-1], time_column, original_data[columns], "contour")
 
 
 def initialize_data():
     observation_depths = [float(x) for x in observation_depths_str]
     surface_boundary_temperatures_by_time = []
     data = data_loader.load_data()
-    observation_times = []
+    observation_times = data["seconds_since"]
     for i, row in data.iterrows():
-        observation_times.append(get_time(int(row["Day"]), int(row["Hour (UTC)"]), int(row["Min"])))
         surface_boundary_temperatures_by_time.append(float(row["T-1.6"]))
     deep_temperature = np.average(data["T-25"])
     initial_temperatures_by_depth = [data.iloc()[0]["T-" + depth] for depth in observation_depths_str]
@@ -50,26 +57,8 @@ def initialize_data():
     matrix[:, 0] = surface_boundary_temperatures_by_time
     initial_temperatures_by_depth.append(deep_temperature)
     matrix[0] = initial_temperatures_by_depth
-    return matrix, observation_depths, observation_times
+    return matrix, observation_depths, observation_times, data
 
-
-def get_time(day, hour, min):
-    initial_day = 17
-    initial_hour = 0
-    initial_min = 5
-    return one_day() * (day - initial_day) + one_hour() * (hour - initial_hour) + one_min() * (min - initial_min)
-
-
-def one_day():
-    return 24*60*60
-
-
-def one_hour():
-    return 60*60
-
-
-def one_min():
-    return 60
 
 
 if __name__=="__main__":
